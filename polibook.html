@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>WebGL Example File</title>
+ 
+	<script id="vshader" type="x-shader/x-vertex">
+	attribute vec4 vPosition;  // attribute denotes that the value is going to change within a draw call
+	attribute vec4 vColor;
+
+	uniform float vPointSize; // uniform varibles do not change within a draw call
+
+	varying vec4 fColor;  // varying allows passing of value between the vertice shader and the fragment shader
+
+	void main() {
+		gl_Position = vPosition;	// Point position
+  		gl_PointSize = vPointSize;		// Point size
+		fColor = vColor;			// Pass point color to fragment shader
+  	}
+	</script>
+	
+	<script id="fshader" type="x-shader/x-fragment">
+	precision mediump float;
+	varying vec4 fColor;
+
+	void main() 
+	{
+		gl_FragColor = fColor;	// Point color
+  	}
+	</script>
+	
+    <script src="lib/webgl-utils.js"></script>
+    <script src="lib/initShaders.js"></script>
+    <script src="lib/MV.js"></script>
+    
+    <script src="example.js"></script>
+
+  </head>
+ 
+  <body onload="main()">
+  
+    <canvas id="webgl" width="800" height="800">
+    Please use a browser that supports the "canvas" tag.
+    </canvas>
+
+  </body>
+</html>
