@@ -1,10 +1,14 @@
-// TODO Troublesome files: house, vinci, dino
+// TODO Image looks squashed, what's the proper canvas size
 // TODO Draw mode and switching between modes
 
 var gl;
 var program;
 var points = [];
 var colors = [];
+
+Array.prototype.insert = function ( index, item ) { // source https://stackoverflow.com/questions/586182/how-to-insert-an-item-into-an-array-at-a-specific-index-javascript
+    this.splice( index, 0, item );
+};
 
 function polibook_draw(lines) {
 
@@ -17,7 +21,6 @@ function polibook_draw(lines) {
     points = [];
     colors = [];
 
-    // TODO let's worry about the dino.dat later
     for(i = 0; i < lines.length; i ++) {  // continues until the comment ends
         try {
             if(lines[i][0].charAt(0) == '*') {
@@ -33,18 +36,32 @@ function polibook_draw(lines) {
             }
         }
     }
-    // end of comment block TODO let's worry about dino.dat later
+    // end of comment block
 
+    //dino.dat: if there is no comment block
+    if(i == lines.length) {
+        i = -1;
+    }
+    console.log(i);
     for(j = i+1; j < lines.length; j ++) {
         var ver_num = 0;
         var cnt = j - i - 1  // how many lines after the commented line have we gone through
         // console.log(cnt + ': ' + lines[j]);
 
         if(cnt == 0) {
-            var left = parseFloat(lines[j][0]);
-            var top = parseFloat(lines[j][1]);
-            var right = parseFloat(lines[j][2]);
-            var bottom = parseFloat(lines[j][3]);
+            if (lines[j].length == 4){
+                var left = parseFloat(lines[j][0]);
+                var top = parseFloat(lines[j][1]);
+                var right = parseFloat(lines[j][2]);
+                var bottom = parseFloat(lines[j][3]);
+            }
+            else {
+                var left = 0;
+                var top = 480;
+                var right = 640;
+                var bottom = 0;
+                cnt = 1;
+            }
 
             var projMatrix = ortho(left, right, bottom, top, -1, 1);
             // ortho(-1, 1, 1, 1)
@@ -53,7 +70,8 @@ function polibook_draw(lines) {
 
             console.log(left + ' ' + top + ' ' + right + ' ' + bottom);
         }
-        else if (cnt == 1) {
+
+        if (cnt == 1) {
             var line_num = parseInt(lines[j][0]);
             console.log('Number of polylines is: ' + line_num);
 
@@ -63,7 +81,7 @@ function polibook_draw(lines) {
 
                 // reset the point buffer
                 if(points.length != 0) { // draw the line if there is any
-                    console.log("drawing line!")
+                    console.log("drawing line: " + points);
 
                     // create Points GPU buffer
                     var pBuffer = gl.createBuffer();
@@ -103,7 +121,31 @@ function polibook_draw(lines) {
         }
     }
 
-    // gl.drawArrays(gl.TRIANGLES, 0, points.length);
+    if(points.length != 0) { // draw the line if there is any
+        console.log("drawing line: " + points);
+
+        // create Points GPU buffer
+        var pBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, pBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);  // flatten the points to be 1D data
+
+        var vPosition = gl.getAttribLocation(program,  "vPosition");
+        gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(vPosition);
+
+        // create Color GPU buffer
+        var cBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+
+        var vColor = gl.getAttribLocation(program,  "vColor");
+        gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(vColor);
+
+        gl.drawArrays(gl.LINE_STRIP, 0, points.length);
+    }
+    points = [];
+    colors = [];
 
     return 0;
 }
@@ -119,8 +161,8 @@ function main()
         reader.readAsText(input.files[0]);
 
         reader.onload = function() {
-            const lines = reader.result.split('\n').map(function(line) {
-                return line.split('  ').map(function(element) {// remove white space from all the elements
+            const lines = reader.result.split('\n').map(function(line) {  // split arguments separated by two white spaces
+                return line.split(/(?: | )+/).map(function(element) {  // remove white space from all the elements
                     return element.trim()
                 }).filter(function (element) {// remove "" from the list
                     return element != ""
@@ -128,9 +170,45 @@ function main()
             }).filter(function(line) {  // remove empty lines
                 return line.length != 0;
             });
+            // in case arguments are separated by one white space instead of two
+            // lines.map(function(line) {
+            //    line.map(function (element) {
+            //             if(element.includes(' ')) {
+            //                 console.log('split by white space: ' + element);
+            //                 return element.split(' ');
+            //             }
+            //             else {
+            //                 return element;
+            //             }
+            //        });
+            //    console.log('flattened');
+            //    return flatten(line);
+            //
+            // });
+            // for(var i = 0; i < lines.length; i ++) {
+            //     var argsWithWhiteSpace = [];
+            //
+            //     for(var j = 0; j < lines[i].length; j ++) {
+            //         var a = lines[i][j];
+            //         if(lines[i][j].includes(" ")) { // if this element includes single white space
+            //             argsWithWhiteSpace.push(lines[i][j]);
+            //         }
+            //     }
+            //
+            //     if(argsWithWhiteSpace.length > 0) {
+            //         var indexOffset = 0;
+            //         for(var k = 0; k < argsWithWhiteSpace.length; k ++) {
+            //             var newArgs = argsWithWhiteSpace[k].split(' ');
+            //
+            //         }
+            //     }
+            //
+            //     console.log('argsWithWhiteSpace' + argsWithWhiteSpace);
+            // }
+
             console.log(lines);
 
-            polibook_draw(lines)
+            polibook_draw(lines);
 
         }
     }, false);
