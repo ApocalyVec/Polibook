@@ -1,20 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+  <style>
+      .poliDiv {
+          margin: auto;
+          width: 80%;
+          border: 3px solid #73AD21;
+          padding: 10px;
+      }
+      canvas {
+          padding-left: 0;
+          padding-right: 0;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+      }
+  </style>
     <meta charset="utf-8" />
-    <title>WebGL Example File</title>
+    <title>Polibook</title>
  
 	<script id="vshader" type="x-shader/x-vertex">
 	attribute vec4 vPosition;  // attribute denotes that the value is going to change within a draw call
 	attribute vec4 vColor;
 
 	uniform float vPointSize; // uniform varibles do not change within a draw call
+    uniform mat4 projMatrix;
 
 	varying vec4 fColor;  // varying allows passing of value between the vertice shader and the fragment shader
 
 	void main() {
-		gl_Position = vPosition;	// Point position
+		gl_Position = projMatrix * vPosition;	// Point position
   		gl_PointSize = vPointSize;		// Point size
+
 		fColor = vColor;			// Pass point color to fragment shader
   	}
 	</script>
@@ -33,15 +50,24 @@
     <script src="lib/initShaders.js"></script>
     <script src="lib/MV.js"></script>
     
-    <script src="example.js"></script>
+    <script src="polibook.js"></script>
 
   </head>
  
   <body onload="main()">
-  
-    <canvas id="webgl" width="800" height="800">
-    Please use a browser that supports the "canvas" tag.
-    </canvas>
+    <h1 style="text-align: center;">Polibook</h1>
+    <h2 style="text-align: center;">File Mode</h2>
+
+    <div class="poliDiv" style="background-color:lightblue">
+        <canvas id="webgl" width="640" height="480">
+            Please use a browser that supports the "canvas" tag.
+        </canvas>
+
+        <input type="file" style="text-align: center;">
+    </div>
+
+
+
 
   </body>
 </html>
