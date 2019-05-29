@@ -337,7 +337,7 @@ function main()
 
         // draw the point if we are in the draw mode
         if(mode == 'd') {
-            if(newLine) {
+            if(newLine || pointsDMode.length >= 100) { // if b key is held down or if the number points exceeds 100
                 newLine = false;
                 pointsDMode = []; //reset points
             }
