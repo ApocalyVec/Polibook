@@ -56,14 +56,16 @@
  
   <body onload="main()">
     <h1 style="text-align: center;">Polibook</h1>
-    <h2 id="modeTf" style="text-align: center;">File Mode</h2>
+    <div>
+        <h2 id="modeTf" style="text-align: center;">File Mode</h2>
+    </div>
 
     <div class="poliDiv" style="background-color:lightblue">
         <canvas id="webgl" width="400" height="400">
             Please use a browser that supports the "canvas" tag.
         </canvas>
 
-        <input type="file" style="text-align: center;">
+        <input id = "uploadBox" type="file" style="text-align: center;">
     </div>
 
 
