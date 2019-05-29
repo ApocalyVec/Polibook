@@ -315,6 +315,19 @@ function main()
     //
 	// // Clear <canvas> by clearning the color buffer
 	// gl.clear(gl.COLOR_BUFFER_BIT);
+    let newLine = false;
+    window.onkeydown = function(event) {
+        if (event.key == "b") {
+            // if b is down, break the line in draw mode
+            newLine = true;
+        }
+    }
+    window.onkeyup = function(event) {
+        if (event.key == "b") {
+            // if b is down, break the line in draw mode
+            newLine = false;
+        }
+    }
 
     canvas.addEventListener("mousedown", function(event) {
         // let x = event.offsetX;
@@ -324,7 +337,14 @@ function main()
 
         // draw the point if we are in the draw mode
         if(mode == 'd') {
-            linesDMdoe.pop();
+            if(newLine) {
+                newLine = false;
+                pointsDMode = []; //reset points
+            }
+            else {
+                linesDMdoe.pop();
+
+            }
             pointsDMode.push(vec4(event.offsetX/canvas.width, (canvas.height - event.offsetY)/canvas.height, 0.0, 1.0));
             linesDMdoe.push(pointsDMode);
             // color is dealt in render
