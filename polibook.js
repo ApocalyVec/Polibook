@@ -5,6 +5,8 @@ var gl;
 var program;
 var points = [];
 var colors = [];
+var curColor = 'd';  // can be 'b', 'r', 'g', 'b'
+var lines;
 
 Array.prototype.insert = function ( index, item ) { // source https://stackoverflow.com/questions/586182/how-to-insert-an-item-into-an-array-at-a-specific-index-javascript
     this.splice( index, 0, item );
@@ -114,7 +116,23 @@ function polibook_draw(lines) {
                 y = parseFloat(lines[j][1])
 
                 points.push(vec4(x, y, 0.0, 1.0));
-                colors.push(vec4(0.0, 0.0, 0.0, 1.0));
+
+                switch (curColor) {
+                    case 'd':
+                        colors.push(vec4(0.0, 0.0, 0.0, 1.0));
+                        break;
+                    case 'r':
+                        colors.push(vec4(1.0, 0.0, 0.0, 1.0));
+                        break;
+                    case 'g':
+                        colors.push(vec4(0.0, 1.0, 0.0, 1.0));
+                        break;
+                    case 'b':
+                        colors.push(vec4(0.0, 0.0, 1.0, 1.0));
+                        break;
+                    default:
+                         colors.push(vec4(0.0, 0.0, 0.0, 1.0));
+                }
 
                 console.log('Adding point: [' + x + ',' + y + ']')
                 }
@@ -161,7 +179,7 @@ function main()
         reader.readAsText(input.files[0]);
 
         reader.onload = function() {
-            const lines = reader.result.split('\n').map(function(line) {  // split arguments separated by two white spaces
+            lines = reader.result.split('\n').map(function(line) {  // split arguments separated by two white spaces
                 return line.split(/(?: | )+/).map(function(element) {  // remove white space from all the elements
                     return element.trim()
                 }).filter(function (element) {// remove "" from the list
@@ -170,41 +188,6 @@ function main()
             }).filter(function(line) {  // remove empty lines
                 return line.length != 0;
             });
-            // in case arguments are separated by one white space instead of two
-            // lines.map(function(line) {
-            //    line.map(function (element) {
-            //             if(element.includes(' ')) {
-            //                 console.log('split by white space: ' + element);
-            //                 return element.split(' ');
-            //             }
-            //             else {
-            //                 return element;
-            //             }
-            //        });
-            //    console.log('flattened');
-            //    return flatten(line);
-            //
-            // });
-            // for(var i = 0; i < lines.length; i ++) {
-            //     var argsWithWhiteSpace = [];
-            //
-            //     for(var j = 0; j < lines[i].length; j ++) {
-            //         var a = lines[i][j];
-            //         if(lines[i][j].includes(" ")) { // if this element includes single white space
-            //             argsWithWhiteSpace.push(lines[i][j]);
-            //         }
-            //     }
-            //
-            //     if(argsWithWhiteSpace.length > 0) {
-            //         var indexOffset = 0;
-            //         for(var k = 0; k < argsWithWhiteSpace.length; k ++) {
-            //             var newArgs = argsWithWhiteSpace[k].split(' ');
-            //
-            //         }
-            //     }
-            //
-            //     console.log('argsWithWhiteSpace' + argsWithWhiteSpace);
-            // }
 
             console.log(lines);
 
@@ -216,6 +199,8 @@ function main()
 
     // Retrieve <canvas> element
 	var canvas = document.getElementById('webgl');
+	// Retrieve <mode text field
+    var modeTf = document.getElementById('modeTf')
 
 	// Get the rendering context for WebGL, comes from the libraries, everything we do will be in gl
 	gl = WebGLUtils.setupWebGL(canvas);
@@ -240,20 +225,20 @@ function main()
     // points.push(vec4(0.0, 0.5, 0.0, 1.0));
 
     // create GPU buffer
-    var pBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, pBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);  // flatten the points to be 1D data
-    
-    var vPosition = gl.getAttribLocation(program,  "vPosition");
-    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vPosition);
+    // var pBuffer = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, pBuffer);
+    // gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);  // flatten the points to be 1D data
+    //
+    // var vPosition = gl.getAttribLocation(program,  "vPosition");
+    // gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    // gl.enableVertexAttribArray(vPosition);
 
 
     //Define the point size
-    var pSizes = [];
-    points.push(10.0);
-    points.push(20.0);
-    points.push(30.0);
+    // var pSizes = [];
+    // points.push(10.0);
+    // points.push(20.0);
+    // points.push(30.0);
     //
     // var psBuffer = gl.createBuffer();
     // gl.bindBuffer(gl.ARRAY_BUFFER, psBuffer)
@@ -265,18 +250,18 @@ function main()
 
 
     //Define the colors of our points
-    var colors = [];
-    colors.push(vec4(1.0, 0.0, 0.0, 1.0));
-    colors.push(vec4(0.0, 1.0, 0.0, 1.0));
-    colors.push(vec4(0.0, 0.0, 1.0, 1.0));
-    
-    var cBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
-    
-    var vColor = gl.getAttribLocation(program,  "vColor");
-    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vColor);
+    // var colors = [];
+    // colors.push(vec4(1.0, 0.0, 0.0, 1.0));
+    // colors.push(vec4(0.0, 1.0, 0.0, 1.0));
+    // colors.push(vec4(0.0, 0.0, 1.0, 1.0));
+    //
+    // var cBuffer = gl.createBuffer();
+    // gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+    // gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+    //
+    // var vColor = gl.getAttribLocation(program,  "vColor");
+    // gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    // gl.enableVertexAttribArray(vColor);
 
     // var pointSizeLoc = gl.getUniformLocation(program, "vPointSize");
     // gl.uniform1f(pointSizeLoc, 50.0);
@@ -287,5 +272,30 @@ function main()
     //
 	// // Clear <canvas> by clearning the color buffer
 	// gl.clear(gl.COLOR_BUFFER_BIT);
+
+    window.addEventListener("keypress", function(e) {
+        console.log('keypress: ' + e.key);
+        if(e.key == 'f') {
+            console.log("File Mode Enabled")
+        }
+        else if (e.key == 'd') {
+            console.log("Drawing Mode Enabled")
+        }
+        else if (e.key == 'c') {
+            if(curColor == 'd') {
+                curColor = 'r';
+            }
+            else if(curColor == 'r') {
+                curColor = 'g';
+            }
+            else if(curColor == 'g') {
+                curColor = 'b';
+            }
+            else if(curColor == 'b') {
+                curColor = 'd';
+            }
+            polibook_draw(lines)
+        }
+    }, false);
 
 }
