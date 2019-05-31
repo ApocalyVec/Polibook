@@ -147,7 +147,7 @@ function polibook_draw(lines) {
                 cnt = 1;
             }
             //Set up the viewport
-            // ration aspect ratio
+            // retain aspect ratio
             let height = top - bottom;
             let width = right - left;
 
