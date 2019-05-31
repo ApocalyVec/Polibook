@@ -20,6 +20,8 @@ var colorsDMode = [];
 
 var mode = 'f';  // default mode is file mode
 
+var canvas;
+
 Array.prototype.insert = function ( index, item ) { // source https://stackoverflow.com/questions/586182/how-to-insert-an-item-into-an-array-at-a-specific-index-javascript
     this.splice( index, 0, item );
 };
@@ -144,6 +146,26 @@ function polibook_draw(lines) {
                 var bottom = 0;
                 cnt = 1;
             }
+            //Set up the viewport
+            // ration aspect ratio
+            let height = top - bottom;
+            let width = right - left;
+
+            let min = 0;
+            let max = 0;
+
+            if(height > width) {
+                min = width;
+                max = height;
+            }
+            else {
+                min = height;
+                max = width;
+            }
+
+            let ratio = min/max;
+
+            gl.viewport( 0, 0, canvas.width, canvas.height * ratio);  // the canvas width and height will update automatically
 
             var projMatrix = ortho(left, right, bottom, top, -1, 1);
             // ortho(-1, 1, 1, 1)
@@ -245,7 +267,7 @@ function main()
 
 
     // Retrieve <canvas> element
-	var canvas = document.getElementById('webgl');
+	canvas = document.getElementById('webgl');
 	// Retrieve <mode text> field
     var modeTf = document.getElementById('modeTf')
     // Retrieve <upload file box> field
@@ -265,8 +287,6 @@ function main()
 	program = initShaders(gl, "vshader", "fshader");
 	gl.useProgram(program);  // use these shaders that we have just created
 
-	//Set up the viewport
-    gl.viewport( 0, 0, canvas.width, canvas.height );  // the canvas width and height will update automatically
 
     let newLine = false;
     window.onkeydown = function(event) {
@@ -322,6 +342,7 @@ function main()
 
         }
         else if (e.key == 'd') {
+            gl.viewport(0, 0, 400, 400);
             console.log("Drawing Mode Enabled")
             modeTf.innerHTML  = "Drawing Mode";
             mode = 'd';
