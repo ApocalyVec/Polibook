@@ -27,6 +27,14 @@ var uploadBox;
 var brushSize;
 var modeTf;
 
+// Variables used in the paint mode
+var paintFlag = false;
+var isDot = false;
+var lastX = 0;
+var lastY = 0;
+var curX = 0;
+var curY = 0;
+
 Array.prototype.insert = function ( index, item ) { // source https://stackoverflow.com/questions/586182/how-to-insert-an-item-into-an-array-at-a-specific-index-javascript
     this.splice( index, 0, item );
 };
@@ -89,6 +97,9 @@ function renderDMode() {
         var vColor = gl.getAttribLocation(program,  "vColor");
         gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(vColor);
+
+        var pointSizeLoc = gl.getUniformLocation(program, "vPointSize");
+        gl.uniform1f(pointSizeLoc, 5.0);
 
         if(linesDMdoe[i].length == 1) {
             gl.drawArrays(gl.POINTS, 0, linesDMdoe[i].length);
@@ -331,11 +342,53 @@ function main()
             pointsDMode.push(vec4(event.offsetX/canvas.width, (canvas.height - event.offsetY)/canvas.height, 0.0, 1.0));
             linesDMdoe.push(pointsDMode);
             // color is dealt in render
-
             renderDMode();
-
+        }
+	    else if(mode == 'p') {
+	        processPaint('down', event);
         }
     }, false);
+
+    canvas.addEventListener('mousemove', function(e) {
+        processPaint('move', e)
+    });
+    canvas.addEventListener('mouseup', function(e) {
+        processPaint('up', e)
+    });
+    canvas.addEventListener('mouseout', function(e) {
+        processPaint('out', e)
+    });
+
+    function processPaint(eventType, e) {
+        if(eventType == 'down') {
+            lastX = curX;
+            lastY = curY;
+            curX = e.offsetX/canvas.width;
+            curY = e.offsetY/canvas.height;
+            console.log("Paint Mode: Click at: [" + e.offsetX/canvas.width + "," + e.offsetY/canvas.height + "]")
+
+            isDot = true;
+            paintFlag = true;
+            if(isDot) { // paint a dot
+                console.log('Painting a Dot');
+            }
+        }
+        else if(eventType == 'out' || eventType == 'up') {
+            paintFlag = false;
+        }
+        else if (eventType == 'move') {
+            if (paintFlag) {
+                lastX = curX;
+                lastY = curY;
+                curX = e.offsetX/canvas.width;
+                curY = e.offsetY/canvas.height;
+            }
+        }
+    }
+
+    function renderPMode() {
+
+    }
 
     window.addEventListener("keypress", function(e) {
         console.log('keypress: ' + e.key);
@@ -377,7 +430,7 @@ function main()
 
             if(mode == 'f') {
                 if(lines) {
-                    polibook_draw(lines)
+                    polibook_draw(lines);
                 }
             }
             else if (mode == 'd') {
@@ -385,18 +438,16 @@ function main()
                     renderDMode();
                 }
             }
-
         }
         else if (e.key == 'p') {
             gl.viewport(0, 0, canvas.width, canvas.height);
             console.log("Paint Mode Enabled")
             paint_mode_display();
-            brushSize.focus(); // set cursor in the brush size box
             brushSize.value = 5;
             mode = 'p';
         }
 
-        if(mode == 'p') {  // handle brush size
+        if(mode == 'p') {  // process brush size
             if(isFinite(e.key)){
                 console.log('Number Pressed');
 
@@ -407,7 +458,8 @@ function main()
                 }
             }
         }
-    }, false)
+    }, false);
+
 
     function file_mode_display() {
         uploadBox.style.display = "block";  // show the upload file box in file mode
@@ -436,6 +488,10 @@ function main()
     }
 
     function paint_mode_display() {
+        // Set clear color
+        gl.clearColor(1.0, 1.0, 1.0, 1.0);
+        // Clear <canvas> by clearning the color buffer
+        gl.clear(gl.COLOR_BUFFER_BIT);
         uploadBox.style.display = "none";
         paintColorDiv.style.display = "block";
         modeTf.innerHTML  = "Paint Mode";
