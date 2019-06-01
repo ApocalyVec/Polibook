@@ -64,11 +64,23 @@
         <canvas id="webgl" width="400" height="400">
             Please use a browser that supports the "canvas" tag.
         </canvas>
-
-        <input id = "uploadBox" type="file" style="text-align: center;">
     </div>
 
+    <div id = "uploadBox" style="text-align: center; margin: 30px" >
+        <input type="file">
+    </div>
 
+    <div id="paintDiv" style="text-align: center; margin: 30px" >
+        <div style="margin: 15px;">
+            <input type="color" name="Paint Color" id="paintColor"
+                   value="#000000">
+            <label for="paintColor">Paint Color</label>
+        </div>
+        <div style="margin: 15px;">
+            <input type="number" name="Brush Size" id="brushSize" min="1" max="10">
+            <label for="brushSize">Brush Size</label>
+        </div>
+    </div>
 
 
   </body>

@@ -20,7 +20,12 @@ var colorsDMode = [];
 
 var mode = 'f';  // default mode is file mode
 
+// HTML element
 var canvas;
+var paintColorDiv;
+var uploadBox;
+var brushSize;
+var modeTf;
 
 Array.prototype.insert = function ( index, item ) { // source https://stackoverflow.com/questions/586182/how-to-insert-an-item-into-an-array-at-a-specific-index-javascript
     this.splice( index, 0, item );
@@ -269,11 +274,16 @@ function main()
     // Retrieve <canvas> element
 	canvas = document.getElementById('webgl');
 	// Retrieve <mode text> field
-    var modeTf = document.getElementById('modeTf')
+    modeTf = document.getElementById('modeTf')
     // Retrieve <upload file box> field
-    var uploadBox = document.getElementById('uploadBox');
+    uploadBox = document.getElementById('uploadBox');
+    // Retrieve <paint dic> field
+    paintColorDiv = document.getElementById('paintDiv');
+    //
+    brushSize = document.getElementById('brushSize');
 
-	// Get the rendering context for WebGL, comes from the libraries, everything we do will be in gl
+
+    // Get the rendering context for WebGL, comes from the libraries, everything we do will be in gl
 	gl = WebGLUtils.setupWebGL(canvas);
 	
 	//Check that the return value is not null.
@@ -330,29 +340,14 @@ function main()
     window.addEventListener("keypress", function(e) {
         console.log('keypress: ' + e.key);
         if(e.key == 'f') {
-            // Set clear color
-            gl.clearColor(1.0, 1.0, 1.0, 1.0);
-            // Clear <canvas> by clearning the color buffer
-            gl.clear(gl.COLOR_BUFFER_BIT);
 
             console.log("File Mode Enabled");
-            modeTf.innerHTML  = "File Mode";
             mode = 'f';
-            uploadBox.style.display = "block";  // show the upload file box in file mode
-
+            file_mode_display();
         }
         else if (e.key == 'd') {
-            gl.viewport(0, 0, 400, 400);
             console.log("Drawing Mode Enabled")
-            modeTf.innerHTML  = "Drawing Mode";
             mode = 'd';
-            uploadBox.style.display = "none";  // hide the upload file box in drawing mode
-
-            //clear the screen when entering draw mode
-            // Set clear color
-            gl.clearColor(1.0, 1.0, 1.0, 1.0);
-            // Clear <canvas> by clearning the color buffer
-            gl.clear(gl.COLOR_BUFFER_BIT);
 
             // set projection matrix for draw mode
             var projMatrix = ortho(0.0, 1.0, 0.0, 1.0, -1, 1);
@@ -363,8 +358,10 @@ function main()
             linesDMdoe = [];
             pointsDMode = [];
             colorsDMode = [];
+
+            draw_mode_display();
         }
-        else if (e.key == 'c') {
+        else if (e.key == 'c') {  // color cycles through black, red, green and blue
             if(curColor == 'd') {
                 curColor = 'r';
             }
@@ -390,6 +387,62 @@ function main()
             }
 
         }
-    }, false);
+        else if (e.key == 'p') {
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            console.log("Paint Mode Enabled")
+            paint_mode_display();
+            brushSize.focus(); // set cursor in the brush size box
+            brushSize.value = 5;
+            mode = 'p';
+        }
 
+        if(mode == 'p') {  // handle brush size
+            if(isFinite(e.key)){
+                console.log('Number Pressed');
+
+                let brushSizeNum = parseInt(e.key);
+
+                if(brushSizeNum != 0) { // brush size cannot be zero
+                    brushSize.value = brushSizeNum;
+                }
+            }
+        }
+    }, false)
+
+    function file_mode_display() {
+        uploadBox.style.display = "block";  // show the upload file box in file mode
+        paintColorDiv.style.display = "none";
+        modeTf.innerHTML  = "File Mode";
+
+        // Set clear color
+        gl.clearColor(1.0, 1.0, 1.0, 1.0);
+        // Clear <canvas> by clearning the color buffer
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+    }
+
+    function draw_mode_display() {
+        uploadBox.style.display = "none";  // hide the upload file box in drawing mode
+        paintColorDiv.style.display = "none";
+        modeTf.innerHTML  = "Drawing Mode";
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        //clear the screen when entering draw mode
+        // Set clear color
+        gl.clearColor(1.0, 1.0, 1.0, 1.0);
+        // Clear <canvas> by clearning the color buffer
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+    }
+
+    function paint_mode_display() {
+        uploadBox.style.display = "none";
+        paintColorDiv.style.display = "block";
+        modeTf.innerHTML  = "Paint Mode";
+
+    }
+
+    //default at file mode
+    file_mode_display()
 }
+
