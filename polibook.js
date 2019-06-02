@@ -1,11 +1,13 @@
 /*
+Ziheng (Leo) Li
+zli12@wpi.edu
+
 This program implement WebGL in making a poliline drawing application.
-It supports two modes
+Please refer to the README file for documentation.
+
+This app implements an extra mode: Paint Mode. Its documentation is in README.
  */
 
-// TODO extra feature: select color from pallette, upload file in draw mode to make changes,
-// TODO ** Extra feature: in draw mode, click q to switch to continuous line mode
-// TODO documentation
 
 var gl;
 var program;
