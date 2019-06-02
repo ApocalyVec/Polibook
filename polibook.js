@@ -23,6 +23,7 @@ var mode = 'f';  // default mode is file mode
 // HTML element
 var canvas;
 var paintColorDiv;
+var paintColor;
 var uploadBox;
 var brushSize;
 var modeTf;
@@ -30,16 +31,20 @@ var modeTf;
 // Variables used in the paint mode
 var paintFlag = false;
 var isDot = false;
-var lastX = 0;
-var lastY = 0;
 var curX = 0;
 var curY = 0;
+
+var pointsPaintMode = [];
+var colorsPaintMode = [];
+
+var PaintPointsDict = {};  // key = point size, value = list of points of that size
+var PaintColorsDict = {};  // key = point size, value = list of colors for points of that size
+//
 
 Array.prototype.insert = function ( index, item ) { // source https://stackoverflow.com/questions/586182/how-to-insert-an-item-into-an-array-at-a-specific-index-javascript
     this.splice( index, 0, item );
 };
 function render() {  // render points and color
-
     // create Points GPU buffer
     var pBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, pBuffer);
@@ -64,6 +69,67 @@ function render() {  // render points and color
     else {
         gl.drawArrays(gl.LINE_STRIP, 0, points.length);
     }
+}
+
+function rendPMode() {
+
+    // for (var key_brushSizeNum in PaintColorsDict) {
+    //     var pPoints = PaintPointsDict[key_brushSizeNum];
+    //     var pColors = PaintColorsDict[key_brushSizeNum];
+    //
+    //     gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    //     // Clear <canvas> by clearning the color buffer
+    //     gl.clear(gl.COLOR_BUFFER_BIT);
+    //     // create Points GPU buffer
+    //     var pBuffer = gl.createBuffer();
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, pBuffer);
+    //     gl.bufferData(gl.ARRAY_BUFFER, flatten(pPoints), gl.STATIC_DRAW);  // flatten the points to be 1D data
+    //
+    //     var vPosition = gl.getAttribLocation(program,  "vPosition");
+    //     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    //     gl.enableVertexAttribArray(vPosition);
+    //
+    //     // create Color GPU buffer
+    //     var cBuffer = gl.createBuffer();
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+    //     gl.bufferData(gl.ARRAY_BUFFER, flatten(pColors), gl.STATIC_DRAW);
+    //
+    //     var vColor = gl.getAttribLocation(program,  "vColor");
+    //     gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    //     gl.enableVertexAttribArray(vColor);
+    //
+    //     var pointSizeLoc = gl.getUniformLocation(program, "vPointSize");
+    //     gl.uniform1f(pointSizeLoc, parseFloat(key_brushSizeNum));
+    //
+    //     gl.drawArrays(gl.POINTS, 0, pPoints.length);
+    // }
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    // Clear <canvas> by clearning the color buffer
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    // create Points GPU buffer
+    var pBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, pBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(pointsPaintMode), gl.STATIC_DRAW);  // flatten the points to be 1D data
+
+    var vPosition = gl.getAttribLocation(program,  "vPosition");
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
+
+    // create Color GPU buffer
+    var cBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(colorsPaintMode), gl.STATIC_DRAW);
+
+    var vColor = gl.getAttribLocation(program,  "vColor");
+    gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vColor);
+
+    var pointSizeLoc = gl.getUniformLocation(program, "vPointSize");
+    gl.uniform1f(pointSizeLoc, parseFloat(brushSize.value));
+
+    gl.drawArrays(gl.POINTS, 0, pointsPaintMode.length);
+
 }
 
 function renderDMode() {
@@ -99,7 +165,7 @@ function renderDMode() {
         gl.enableVertexAttribArray(vColor);
 
         var pointSizeLoc = gl.getUniformLocation(program, "vPointSize");
-        gl.uniform1f(pointSizeLoc, 5.0);
+        gl.uniform1f(pointSizeLoc, 3.0);
 
         if(linesDMdoe[i].length == 1) {
             gl.drawArrays(gl.POINTS, 0, linesDMdoe[i].length);
@@ -218,7 +284,6 @@ function polibook_draw(lines) {
                 points.push(vec4(x, y, 0.0, 1.0));
                 pushToColor(colors);
 
-
                 console.log('Adding point: [' + x + ',' + y + ']')
             }
         }
@@ -290,9 +355,16 @@ function main()
     uploadBox = document.getElementById('uploadBox');
     // Retrieve <paint dic> field
     paintColorDiv = document.getElementById('paintDiv');
-    //
+    // Retrieve <brush size numeric input> field
     brushSize = document.getElementById('brushSize');
+    // Retrieve <paint color color input> field
+    paintColor = document.getElementById('paintColor');
 
+
+    brushSize.onchange = function() {
+        console.log('brush size changed')
+        rendPMode()
+    };
 
     // Get the rendering context for WebGL, comes from the libraries, everything we do will be in gl
 	gl = WebGLUtils.setupWebGL(canvas);
@@ -349,28 +421,43 @@ function main()
         }
     }, false);
 
+    // mouse move event defined in html
     canvas.addEventListener('mousemove', function(e) {
-        processPaint('move', e)
+        console.log('moved!');
+        processPaint('move', e);
     });
+
     canvas.addEventListener('mouseup', function(e) {
-        processPaint('up', e)
+        processPaint('up', e);
     });
     canvas.addEventListener('mouseout', function(e) {
-        processPaint('out', e)
+        processPaint('out', e);
     });
 
     function processPaint(eventType, e) {
+        if(mode != 'p') {
+            return
+        }
+
+        let rgb = hexToRgb(paintColor.value)
+
+        let r = rgb.r/255;
+        let g = rgb.g/255;
+        let b = rgb.b/255;
+
         if(eventType == 'down') {
-            lastX = curX;
-            lastY = curY;
+
             curX = e.offsetX/canvas.width;
             curY = e.offsetY/canvas.height;
-            console.log("Paint Mode: Click at: [" + e.offsetX/canvas.width + "," + e.offsetY/canvas.height + "]")
+            console.log("Paint Mode: Click at: [" + curX + "," + curY + "]")
 
             isDot = true;
             paintFlag = true;
             if(isDot) { // paint a dot
-                console.log('Painting a Dot');
+                // console.log('Painting a Dot');
+                // console.log('color is: ' + paintColor.value);
+
+                paint_point(curX, (1-curY), r,g,b);
             }
         }
         else if(eventType == 'out' || eventType == 'up') {
@@ -378,17 +465,45 @@ function main()
         }
         else if (eventType == 'move') {
             if (paintFlag) {
-                lastX = curX;
-                lastY = curY;
+
                 curX = e.offsetX/canvas.width;
                 curY = e.offsetY/canvas.height;
+                // console.log('Painting a line');
+
+                paint_point(curX, (1-curY), r,g,b);
             }
         }
     }
 
-    function renderPMode() {
+    function paint_point(x,y,r,g,b){
+
+        let brushSizeNum = parseFloat(brushSize.value);
+
+        if (!(brushSizeNum in PaintPointsDict)) {
+            PaintPointsDict[brushSizeNum] = [];
+            PaintPointsDict[brushSizeNum].push(vec4(curX, (1-curY), 0.0, 1.0));
+        }
+        else{
+            PaintPointsDict[brushSizeNum].push(vec4(curX, (1-curY), 0.0, 1.0));
+        }
+
+        if(!(brushSizeNum in PaintColorsDict)) {
+            PaintColorsDict[brushSizeNum] = [];
+            PaintColorsDict[brushSizeNum].push(vec4(r, g, b, 1.0));
+        }
+        else{
+            PaintColorsDict[brushSizeNum].push(vec4(r, g, b, 1.0));
+        }
+
+        // console.log(PaintPointsDict);
+        // console.log(PaintColorsDict);
+        //
+        pointsPaintMode.push(vec4(curX, (1-curY), 0.0, 1.0));
+        colorsPaintMode.push(vec4(r, g, b, 1.0))
+        rendPMode();
 
     }
+
 
     window.addEventListener("keypress", function(e) {
         console.log('keypress: ' + e.key);
@@ -443,12 +558,21 @@ function main()
             gl.viewport(0, 0, canvas.width, canvas.height);
             console.log("Paint Mode Enabled")
             paint_mode_display();
+
+            // set projection matrix for draw mode
+            var projMatrix = ortho(0.0, 1.0, 0.0, 1.0, -1, 1);
+            var projMatrixLoc = gl.getUniformLocation(program, "projMatrix");
+            gl.uniformMatrix4fv(projMatrixLoc, false, flatten(projMatrix));
+
+            pointsPaintMode = [];
+            colorsPaintMode = [];
+
             brushSize.value = 5;
             mode = 'p';
         }
 
         if(mode == 'p') {  // process brush size
-            if(isFinite(e.key)){
+            if(isFinite(e.key) && e.target.nodeName != 'INPUT'){  // if a number key is pressed and if cursor is not in the number input field
                 console.log('Number Pressed');
 
                 let brushSizeNum = parseInt(e.key);
@@ -456,12 +580,14 @@ function main()
                 if(brushSizeNum != 0) { // brush size cannot be zero
                     brushSize.value = brushSizeNum;
                 }
+                rendPMode();  // re-render the scene in new brush size settings
             }
         }
     }, false);
 
 
     function file_mode_display() {
+        // set HTML element visibility
         uploadBox.style.display = "block";  // show the upload file box in file mode
         paintColorDiv.style.display = "none";
         modeTf.innerHTML  = "File Mode";
@@ -474,6 +600,7 @@ function main()
     }
 
     function draw_mode_display() {
+        // set HTML element visibility
         uploadBox.style.display = "none";  // hide the upload file box in drawing mode
         paintColorDiv.style.display = "none";
         modeTf.innerHTML  = "Drawing Mode";
@@ -488,13 +615,17 @@ function main()
     }
 
     function paint_mode_display() {
+        // set HTML element visibility
+        uploadBox.style.display = "none";
+        paintColorDiv.style.display = "block";
+        modeTf.innerHTML  = "Paint Mode";
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+
         // Set clear color
         gl.clearColor(1.0, 1.0, 1.0, 1.0);
         // Clear <canvas> by clearning the color buffer
         gl.clear(gl.COLOR_BUFFER_BIT);
-        uploadBox.style.display = "none";
-        paintColorDiv.style.display = "block";
-        modeTf.innerHTML  = "Paint Mode";
 
     }
 
@@ -502,3 +633,11 @@ function main()
     file_mode_display()
 }
 
+function hexToRgb(hex) {  // from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}

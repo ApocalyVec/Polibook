@@ -61,9 +61,18 @@
     </div>
 
     <div class="poliDiv" style="background-color:lightblue">
-        <canvas id="webgl" width="400" height="400">
+        <canvas id="webgl" width="400" height="400" onmousemove="canvasMouseMove(event)">
             Please use a browser that supports the "canvas" tag.
         </canvas>
+        <script>
+            function canvasMouseMove(e) {
+                // var x = e.clientX;
+                // var y = e.clientY;
+                // var coor = "Coordinates: (" + x + "," + y + ")";
+                // console.log(coor);
+            }
+
+        </script>
     </div>
 
     <div id = "uploadBox" style="text-align: center; margin: 30px" >
